@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <!--Imports for dynamic table -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css" />
+
+  <title>Breakdown Tracker</title>
+
+    <meta charset="utf-8">
+
+    <!--Imports for cards that I used for forms -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+    <style>
+      * {box-sizing: border-box}
+      
+    /* Set height of body and the document to 100% */
+      body, html {
+        height: 100%;
+        margin: 0;
+        font-family: Arial;
+      }
+
+      body  {
+        background-image: url("image.png");
+        background-color: #cccccc;
+        background-size: 130%;
+      }
+      
+    /* Style tab links */
+      .tablink {
+        background-color: #555;
+        color: white;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        font-size: 17px;
+        width: 25%;
+      }
+    /*Style for when bringing the mouse over a tab*/
+      .tablink:hover {
+        background-color: #777;
+      }
+      
+    /*Style the tab content (and add height:auto for full page content) */
+      .tabcontent {
+        color: white;
+        display: none;
+        padding: 100px 20px;
+        height: auto;
+      }
+    
+    /*Style for labels */
+      .col1 {
+      float: left;
+      width: 7%;
+      margin-top: 6px;
+    }
+    /*Style for input boxes */
+    .col2 {
+      float: left;
+      width: 93%;
+      margin-top: 6px;
+    }
+    /*Style for text typed input boxes */
+    input[type=text] {
+      width: 20%;
+    }
+    /*Style for datetime-local typed input boxes */
+    input[type=datetime-local] {
+      width: 20%;
+    }
+
+  /*Style for submit box*/
+  #button1 {
+      margin-top: 6px;
+      margin-left: 6px;
+     cursor: pointer;
+     float: left;
+    }
+
+    /*Style for reset box*/
+    input[type=reset] {
+      margin-top: 6px;
+      margin-left: 247px;
+     cursor: pointer;
+     float: left;
+    }
+    /*Colours of the different tabs*/
+      #Home {background-color: transparent;}
+      #Breakdowns {background-color: transparent;}
+      #Machines {background-color: transparent;}
+      #Materials {background-color: transparent;}
+
+    .w3-container{
+      display: none;
+    }
+
+    .btn-cancel{
+      display: none;
+    }
+
+    /*Style for modify button */
+    #on2{
+      visibility: hidden;}
+
+      </style>
+
+    <script >
+
+      function openPage(pageName,elmnt,color) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tabcontent");
+          for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+          }
+        tablinks = document.getElementsByClassName("tablink");
+          for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].style.backgroundColor = "";
+          }
+      document.getElementById(pageName).style.display = "block";
+      elmnt.style.backgroundColor = color;
+}
+
+    //Refresh function
+    function refreshPage(){
+    window.location.reload();
+} 
+    
+      //Read from file and print it in a box
+      function printResult(box,file) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+          if (this.readyState == 4 && this.status == 200) {
+            document.getElementById(box).value=
+            this.responseText;
+          }
+        };
+        xhttp.open("POST", file, true);
+        xhttp.send();
+      }
+
+      function storeResult(box,file,j,k,area1) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+          if (this.readyState == 4 && this.status == 200) {
+            let text =this.responseText;
+            const obj = JSON.parse(text);
+             
+            for(let i=0; i<3;i++){
+            document.getElementById(box.concat(j.toString())).value=obj[i][area1];
+            j=j+k;
+            }
+
+          }
+        };
+        xhttp.open("POST", file, true);
+        xhttp.send();
+      }
+
+      //Run multiple functions in a function
+      function startMultiple(){
+        //printResult('mybox6','query2.php');
+        //printResult('mybox7','query6.php');
+        storeResult('mybox','query4.php',0,2,'name');//box name without number, queries file, starting point, increment
+        storeResult('mybox','query4.php',1,2,'amount');
+        def();
+      }
+
+      // Only allow upper case letters, lower case letters, numbers, backspace, enter, space to user to enter as a input
+      function blockSpecialChar(e) {
+            var k = e.keyCode;
+            return ((k > 64 && k < 91) || (k > 96 && k < 123) || (k >= 48 && k <= 57) || k==8  || k==13 || k==32 );
+        }
+
+       // Main page get the element with id="defaultOpen" and click on it
+      function def(){
+            document.getElementById("defaultOpen").click();
+      }
+    
+      // After clicking open form button , open button disappears, form and close button appear
+      function openForm(form,button1,button2) {
+              document.getElementById(form).style.display = "block";
+              document.getElementById(button1).style.display = "none";
+              document.getElementById(button2).style.display = "block";
+
+              $('#table1').DataTable().ajax.reload();
+              $('#table2').DataTable().ajax.reload();
+      }
+      // After clicking close form button , form close button disappears, open button appear
+      function closeForm(form,button1,button2) {
+              document.getElementById(form).style.display = "none";
+              document.getElementById(button1).style.display = "block";
+              document.getElementById(button2).style.display = "none";
+      }
+      //Post form data to php
+      function postData(form,file) {
+        var xmlhttp=new XMLHttpRequest();
+        var formData = new FormData(document.getElementById(form));
+
+        xmlhttp.open("POST",file,true);
+        xmlhttp.send(formData);
+      }
+      function clearResult(form){
+        document.getElementById(form).reset();
+      }
+
+      function postAndClear(form,file){
+        
+        postData(form,file); 
+        $('#table1').DataTable().ajax.reload();
+        $('#table2').DataTable().ajax.reload();
+        clearResult(form);
+      }
+
+      //Dynamic table via jQuery
+      $(document).ready(function () {
+    $('#table1').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: 'server_processing.php',
+        columns: [
+            { data: 'id' },
+            { data: 'creationTime' },
+            { data: 'machineId' },
+            { data: 'type' },
+            { data: 'state' },
+            { data: 'description' },
+            { data: 'estimatedDeadline' },
+            { data: 'remainingTime' },
+        ],
+    });
+});
+
+//When clicked, open modification menu
+$(document).ready(function () {
+    var table = $('#table1').DataTable();
+ 
+    $('#table1 tbody').on('click', 'tr', function () {
+        var data = table.row(this).data();
+        //console.log( table.row( this ).data() );
+
+        document.getElementById('ID2').value=data['id'];
+        document.getElementById('machineId2').value=data['machineId'];
+        document.getElementById('type2').value=data['type'];
+        
+        var stateTemp = data['state'];
+        //console.log(stateTemp);
+        
+        if (stateTemp==0){
+          document.getElementById('0').checked = true;
+        }
+        else if (stateTemp==1){
+          document.getElementById('1').checked = true;
+        }
+        else if (stateTemp==2){
+          document.getElementById('2').checked = true;
+        }
+        else {
+          document.getElementById('3').checked = true;
+        }
+        
+        document.getElementById('description2').value=data['description'];
+        document.getElementById('time22').value=data['estimatedDeadline'];
+
+        openForm('myForm3','on2','off2');
+
+        openPopUp(data);
+    });
+});
+//Dynamic table2 via jQuery
+$(document).ready(function () {
+    $('#table2').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: 'formatter.php',
+        columns: [
+            { data: 'id' },
+            { data: 'creationTime' },
+            { data: 'machineId' },
+            { data: 'type' },
+            { data: 'state' },
+            { data: 'description' },
+            { data: 'estimatedDeadline' },
+            { data: 'remainingTime' },
+        ],
+    });
+});
+
+      //Dynamic table via jQuery
+      $(document).ready(function () {
+    $('#table3').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: 'server_processing2.php',
+        columns: [
+            { data: 'id' },
+            { data: 'departmentCode' },
+            { data: 'status' },
+            { data: 'definition' },
+        ],
+    });
+});
+      </script>
+
+</head>
+
+<body onload="startMultiple()">
+
+  <button class="tablink" onclick="openPage('Home', this, 'transparent')"id="defaultOpen">Home</button>
+  <button class="tablink" onclick="openPage('All', this, 'transparent')" >All </button>
+  <button class="tablink" onclick="openPage('Ongoing', this, 'transparent')">Ongoing</button>
+  <button class="tablink" onclick="openPage('Others', this, 'transparent')">Others</button>
+
+ <div id="Home" class="tabcontent">
+
+  <h3>All Breakdowns</h3>
+
+  <div id="stripe">
+    <!-- <img src="image2.png" alt="Avatar" style="width:100%"> --> 
+    <div class="container">
+
+        <p id="temp">  </p>
+
+    </div>
+  </div>
+</div>
+
+<div id="All" class="tabcontent">
+
+  <h3>All Breakdowns</h3>
+
+<!--Table1-->
+
+  <table id="table1" class="display" style="width:100%" bgcolor="gray">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Creation Time</th>
+            <th>Machine ID</th>
+            <th>Type</th>
+            <th>State</th>
+            <th>Description</th>
+            <th>Estimated Deadline</th>
+            <th>Remaining Time</th>
+         
+        </tr>
+    </thead>
+    <tfoot>
+        <tr>
+          <th>ID</th>
+          <th>Creation Time</th>
+          <th>Machine ID</th>
+          <th>Type</th>
+          <th>State</th>
+          <th>Description</th>
+          <th>Estimated Deadline</th>
+          <th>Remaining Time</th>
+        </tr>
+    </tfoot>
+</table>
+
+  <!--
+  <input id="mybox8">
+
+  <button type="submit" onClick="refreshPage()">Refresh Button</button>
+  -->
+  <br><br>
+
+  <!--Add Button-->
+  <button class="open-button" id="on" onclick="openForm('myForm','on','off')">Add</button>
+  <button type="button" id="off" class="btn-cancel" onclick="closeForm('myForm','on','off')">Close</button>
+  
+  <div class="card">
+  <div class="w3-container" id="myForm">
+    <div class="w3-panel w3-card w3-aqua w3-padding-small w3-hover-shadow">
+  
+      <form id="myForm2" onkeypress="return blockSpecialChar(event)"> 
+
+        <!--
+    <div class="row">
+      <div class="col1">
+        <label for="time">Time:</label>
+      </div>
+      <div class="col2">
+        <input type="datetime-local" step="1" name="time" id="time">
+      </div>
+    </div>
+  -->
+    <div class="row">
+      <div class="col1">
+        <label for="machineId">Machine ID:</label>
+      </div>
+      <div class="col2">
+        <input type="text" name="machineId" id="machineId">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col1">
+        <label for="type">Type:</label>
+      </div>
+      <div class="col2">
+        <input type="text" name="type" id="type">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col1">
+        <label for="state">State:</label>
+      </div>
+      <div class="col2">
+        <input type="radio"  id="state0" name="state" value="0">
+        <label for="state0">Broken</label>
+        <input type="radio" id="state1" name="state" value="1">
+        <label for="state1">In the process</label>
+        <input type="radio"  id="state2" name="state" value="2">
+        <label for="state2">Fixed</label>
+        <input type="radio"  id="state3" name="state" value="3">
+        <label for="state3">Cancel</label>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col1">
+        <label for="description">Description:</label>
+      </div>
+      <div class="col2">
+        <input type="text" name="description" id="description">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col1">
+        <label for="time2">Deadline:</label>
+      </div>
+      <div class="col2">
+        <input type="datetime-local" step="1" name="time2" id="time2">
+      </div>
+    </div>
+
+    <div class="row">
+        <input type="reset">
+      </div>
+
+    <div class="row">
+      <button id= button1 type="button" onclick="postAndClear('myForm2','trimmedInsertion.php')">Submit</button>
+      </div>
+    
+    </form>
+  </div>
+  </div>
+</div>
+
+<!--Modify Button-->
+
+<br> <br>
+  <button class="open-button" id="on2" onclick="openForm('myForm3','on2','off2')">Modify</button>
+  <button type="button" id="off2" class="btn-cancel" onclick="closeForm('myForm3','on2','off2')">Close</button>
+
+  <div class="w3-container" id="myForm3">
+    <div class="w3-panel w3-card w3-purple w3-padding-small w3-hover-shadow">
+  
+      <form id="myForm4" onkeypress="return blockSpecialChar(event)"> 
+
+    <div class="row">
+      <div class="col1">
+        <label for="ID2">ID:</label>
+      </div>
+      <div class="col2">
+        <input type="text" step="1" name="ID2" id="ID2" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col1">
+        <label for="machineId2">Machine ID:</label>
+      </div>
+      <div class="col2">
+        <input type="text" name="machineId2" id="machineId2">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col1">
+        <label for="type2">Type:</label>
+      </div>
+      <div class="col2">
+        <input type="text" name="type2" id="type2">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col1">
+        <label for="state2">State:</label>
+      </div>
+      <div class="col2">
+        <input type="radio" id="0" name="state2" value="0">
+        <label for="0">Broken</label>
+        <input type="radio" id="1" name="state2" value="1">
+        <label for="1">In the process</label>
+        <input type="radio" id="2" name="state2" value="2">
+        <label for="2">Fixed</label>
+        <input type="radio" id="3" name="state2" value="3">
+        <label for="3">Cancel</label>
+      </div>
+    </div>
+  
+    <div class="row">
+      <div class="col1">
+        <label for="description2">Description:</label>
+      </div>
+      <div class="col2">
+        <input type="text" name="description2" id="description2">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col1">
+        <label for="time22">Deadline:</label>
+      </div>
+      <div class="col2">
+        <input type="datetime-local" step="1" name="time22" id="time22">
+      </div>
+    </div>
+
+    <div class="row">
+        <input type="reset">
+      </div>
+
+    <div class="row">
+      <button id= button1 type="button" onclick="postAndClear('myForm4','modify.php')">Submit</button>
+      </div>
+    
+    </form>
+  </div>
+</div>
+
+
+<div id="history" class="w3-card w3-black w3-hover-shadow w3-text-green w3-round w3-hover-text-black w3-hover-green">
+  <div class="historyContainer">
+<p id="historyTemp"></p>
+  </div>
+</div>
+
+
+</div>
+
+<div id="Ongoing" class="tabcontent">
+
+  <h3>Ongoing Breakdowns</h3>
+<!--
+  <input id="mybox6">
+-->
+  <!--Table2-->
+  <table id="table2" class="display" style="width:100%" bgcolor="gray">
+    <thead>
+        <tr>
+          <th>ID</th>
+          <th>Creation Time</th>
+          <th>Machine ID</th>
+          <th>Type</th>
+          <th>State</th>
+          <th>Description</th>
+          <th>Estimated Deadline</th>
+          <th>Remaining Time</th>
+        </tr>
+    </thead>
+    <tfoot>
+        <tr>
+          <th>ID</th>
+          <th>Creation Time</th>
+          <th>Machine ID</th>
+          <th>Type</th>
+          <th>State</th>
+          <th>Description</th>
+          <th>Estimated Deadline</th>
+          <th>Remaining Time</th>
+        </tr>
+    </tfoot>
+</table>
+</div>
+
+<div id="Others" class="tabcontent">
+  
+  <h3>Machines</h3>
+
+
+<!--Table3-->
+
+<table id="table3" class="display" style="width:100%" bgcolor="gray">
+  <thead>
+      <tr>
+          <th>ID</th>
+          <th>Department Code</th>
+          <th>Status</th>
+          <th>Defininiton</th>
+      </tr>
+  </thead>
+  <tfoot>
+      <tr>
+        <th>ID</th>
+        <th>Department Code</th>
+        <th>Status</th>
+        <th>Defininiton</th>
+      </tr>
+  </tfoot>
+</table>
+
+ <!--
+  <input id="mybox7">
+
+  <button type="submit" onClick="refreshPage()">Refresh</button>
+  -->
+  <hr style="height:2px;border-width:0;color:gray;background-color:gray">
+  
+  <h3>Materials</h3>
+  <p>Material &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+    &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Amount</p>
+  <input id="mybox0" readonly>
+  <input id="mybox1" readonly> 
+  <br>
+  <input id="mybox2" readonly>
+  <input id="mybox3" readonly> 
+  <br>
+  <input id="mybox4" readonly>
+  <input id="mybox5" readonly> 
+  <br><br>
+
+</div>
+
+<script src="stripeCards.js"></script>
+
+<script src="historyTable.js"></script>
+
+</body>
+</html>
